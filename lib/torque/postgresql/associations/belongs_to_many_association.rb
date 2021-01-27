@@ -45,8 +45,8 @@ module Torque
           super
 
           attribute = (ids_reader || owner[source_attr] = [])
-          attribute.push(record[klass_attr])
-          ids_writer(attribute)
+          id_value = record[klass_attr]
+          attribute.push(id_value) unless attribute.include?(id_value)
           record
         end
 
@@ -94,6 +94,8 @@ module Torque
 
           def concat_records(*)
             result = super
+
+            result.each { |result| insert_record(result) }
             ids_writer(ids_reader)
             result
           end
