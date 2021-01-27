@@ -46,6 +46,7 @@ module Torque
 
           attribute = (ids_reader || owner[source_attr] = [])
           attribute.push(record[klass_attr])
+          ids_writer(attribute)
           record
         end
 

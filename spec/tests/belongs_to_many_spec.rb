@@ -50,6 +50,16 @@ RSpec.describe 'BelongsToMany' do
       expect(subject.tags.to_a).to be_eql([initial])
     end
 
+    it 'can create with records' do
+      records = FactoryBot.create_list(:tag, 2)
+      video = Video.create(tags: records)
+
+      video.reload
+
+      expect(video.tags.size).to be_eql(2)
+      expect(video.tag_ids.size).to be_eql(2)
+    end
+
     it 'can be marked as loaded' do
       expect(subject.tags.loaded?).to be_eql(false)
       expect(subject.tags).to respond_to(:load_target)
