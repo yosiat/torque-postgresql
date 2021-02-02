@@ -59,7 +59,12 @@ module Torque
 
         def build_changes
           @_building_changes = true
-          yield.tap { ids_writer(stale_state) }
+          yield.tap do
+            if owner.changes.include? source_attr
+              ids_writer(stale_state)
+            end
+          end
+          true
         ensure
           @_building_changes = nil
         end
@@ -188,7 +193,8 @@ module Torque
             build_changes { super }
           end
 
-          def concat_records(*)
+          def concat_records(records, raise = false)
+            records.each { |record| ids_rewriter(record.read_attribute(klass_attr), :<<) }
             build_changes { super }
           end
 

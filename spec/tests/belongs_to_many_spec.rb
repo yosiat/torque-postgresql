@@ -26,6 +26,8 @@ RSpec.describe 'BelongsToMany' do
     let(:other) { Tag }
     let(:initial) { FactoryBot.create(:tag) }
 
+    before { Video.reset_callbacks(:save) }
+    before { Video.reset_callbacks(:commit) }
     before { Video.belongs_to_many(:tags) }
     subject { Video.create(title: 'A') }
     after { Video._reflections = {} }
@@ -261,6 +263,38 @@ RSpec.describe 'BelongsToMany' do
       query = Video.all.joins(:tags)
       expect(query.to_sql).to match(/INNER JOIN "tags"/)
       expect { query.load }.not_to raise_error
+    end
+
+    it 'maintains after_commit changes' do
+      video = Video.create
+
+      # Accessing tags here is crucial for the after commit
+      expect(video.tags.count).to be_eql(0)
+
+      after_commit_previous_changes = nil
+      after_commit_saved_changes = nil
+
+      Video.after_commit do
+        after_commit_previous_changes = previous_changes.dup
+        after_commit_saved_changes = saved_changes.dup
+      end
+
+      video.update(title: "hello world")
+
+      expect(after_commit_previous_changes).to include("title")
+      expect(after_commit_saved_changes).to include("title")
+    end
+
+    it 'allows to associate in before_save' do
+      Video.before_save do
+        self.tags = FactoryBot.create_list(:tag, 5)
+      end
+
+      video = Video.create!
+
+
+      expect(video.tags.count).to be_eql(5)
+      expect(video.tag_ids.size).to be_eql(5)
     end
 
     context "When record is not persisted" do
